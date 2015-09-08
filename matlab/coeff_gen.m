@@ -9,7 +9,7 @@ b = fir1(N, BWF);
 
 % Normalize and quantize.
 scale_factor = ((2^(Nb-1))-1)/max(abs(b));
-b2 = b*scale_factor;
+b2 = round(b*scale_factor);
 
 % Now let's scale the coeffs so they give good output range.
 sprintf('length of b2 = %d, gain of b2 = %d\n', length(b2), sum(b2))
