@@ -12,6 +12,17 @@ entity halfband0_matlab_tb is generic (data_width    : natural := 16); end entit
 
 architecture rtl of halfband0_matlab_tb is
 
+    COMPONENT halfband0
+    PORT (
+        aresetn : IN STD_LOGIC;
+        aclk : IN STD_LOGIC;
+        s_axis_data_tvalid : IN STD_LOGIC;
+        s_axis_data_tready : OUT STD_LOGIC;
+        s_axis_data_tdata : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+        m_axis_data_tvalid : OUT STD_LOGIC;
+        m_axis_data_tdata : OUT STD_LOGIC_VECTOR(15 DOWNTO 0));
+    END COMPONENT;
+
     signal reset      : std_logic;
     signal clk        : std_logic;
     signal dv_in      : std_logic;
@@ -156,23 +167,16 @@ begin
             end case;
         end if;
     end process;
-    
 
-    uut: entity work.full_correlator 
-    port map (
-        reset         => reset      ,
-        clk           => clk        ,
-        --
-        dv_in         => dv_in      ,
-        real_in       => real_in    ,
-        imag_in       => imag_in    ,
-        branch_in     => branch_in  ,
-        --
-        dv_out        => dv_out     ,
-        real_out      => real_out   ,
-        imag_out      => imag_out   ,
-        branch_out    => branch_out );
-
+    uut : entity work.halfband0
+    PORT MAP (
+        aresetn => aresetn,
+        aclk => aclk,
+        s_axis_data_tvalid => s_axis_data_tvalid,
+        s_axis_data_tready => s_axis_data_tready,
+        s_axis_data_tdata => s_axis_data_tdata,
+        m_axis_data_tvalid => m_axis_data_tvalid,
+        m_axis_data_tdata => m_axis_data_tdata);
 
     clk_proc:process
     begin
@@ -181,7 +185,6 @@ begin
         clk <= '1';
         wait for clk_period/2;
     end process;
-
 
 end architecture rtl;
 
