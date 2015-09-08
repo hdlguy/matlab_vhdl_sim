@@ -1,142 +1,71 @@
--- This testbench reads input data from text files that are generated from Steve's matlab data
+-- This testbench reads input data from text files that are generated from matlab data
 -- and writes the results back out.
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.ALL;
-use IEEE.math_real.ALL;
 use ieee.std_logic_textio.all;
 use std.textio.all;
-use work.mb_sync_pkg.all;
 
 entity halfband0_matlab_tb is generic (data_width    : natural := 16); end entity halfband0_matlab_tb;
 
 architecture rtl of halfband0_matlab_tb is
-
-    COMPONENT halfband0
-    PORT (
-        aresetn : IN STD_LOGIC;
-        aclk : IN STD_LOGIC;
-        s_axis_data_tvalid : IN STD_LOGIC;
-        s_axis_data_tready : OUT STD_LOGIC;
-        s_axis_data_tdata : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-        m_axis_data_tvalid : OUT STD_LOGIC;
-        m_axis_data_tdata : OUT STD_LOGIC_VECTOR(15 DOWNTO 0));
-    END COMPONENT;
-
-    signal reset      : std_logic;
-    signal clk        : std_logic;
-    signal dv_in      : std_logic;
-    signal branch_in  : std_logic_vector(1 downto 0);
-    signal real_in    : corr_array_t;
-    signal imag_in    : corr_array_t;
-    signal dv_out     : std_logic;
-    signal real_out   : full_corr_array_t;
-    signal imag_out   : full_corr_array_t;
-    signal branch_out : std_logic_vector(1 downto 0);
+    --
+    --COMPONENT halfband0
+    --PORT (
+        --aresetn : IN STD_LOGIC;
+        --aclk : IN STD_LOGIC;
+        --s_axis_data_tvalid : IN STD_LOGIC;
+        --s_axis_data_tready : OUT STD_LOGIC;
+        --s_axis_data_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        --m_axis_data_tvalid : OUT STD_LOGIC;
+        --m_axis_data_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0));
+    --END COMPONENT;
+    --
+    signal aresetn            : std_logic;
+    signal clk                : std_logic;
+    signal s_axis_data_tvalid : STD_LOGIC;
+    signal s_axis_data_tready : STD_LOGIC;
+    signal s_axis_data_tdata  : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    signal m_axis_data_tvalid : STD_LOGIC;
+    signal m_axis_data_tdata  : STD_LOGIC_VECTOR(31 DOWNTO 0);
     --
     constant clk_period  : time := 10 ns;
-    signal endoffile : std_logic := '0';
-    --constant inscale     : real := 2.0**(corr_dwidth-1);
-    constant inscale     : real := 1.0;
+    --
+    signal real_in, imag_in  : std_logic_vector(11 downto 0);
+    signal real_out, imag_out  : std_logic_vector(12 downto 0);
+    --
 begin
 
     stim_proc:process
-        file   infile0       : text open read_mode is  "../../../../../../matlab/sb_out0.dat";
-        file   infile1       : text open read_mode is  "../../../../../../matlab/sb_out1.dat";
-        file   infile2       : text open read_mode is  "../../../../../../matlab/sb_out2.dat";
-        file   infile3       : text open read_mode is  "../../../../../../matlab/sb_out3.dat";
-        variable  inline    : line;
-        variable  dataread1 : real;
+        file  infile0      : text open read_mode is  "../../../../matlab/test_data.dat";
+        variable inline    : line;
+        variable dataread1 : integer;
     begin
-        reset <= '1';
-        dv_in <= '0';
-        for i in 0 to Nsub-1 loop
-            real_in(i) <= (others=>'X');
-            imag_in(i) <= (others=>'X');
-        end loop;
-        branch_in <= "XX";
+        aresetn <= '0';
+        real_in <= (others=>'X');
+        imag_in <= (others=>'X');
+        s_axis_data_tvalid  <= '0';
         wait for clk_period*4;
 
-        reset <= '0';
+        aresetn <= '1';
         wait for clk_period*4;
 
-        while (not endfile(infile3)) loop
+        while (not endfile(infile0)) loop
             --
-            dv_in <= '1';
-            branch_in <= "00";
-            for j in 0 to Nfft/2-1 loop
-                readline(infile0, inline);
-                for i in 0 to Nsub-1 loop
-                    read(inline, dataread1);
-                    real_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                    read(inline, dataread1);
-                    imag_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                end loop;
-                wait for clk_period*1;
-            end loop;
-            dv_in <= '0';
-            branch_in <= "XX";
-            wait for clk_period*2515;
-            --
-            dv_in <= '1';
-            branch_in <= "01";
-            for j in 0 to Nfft/2-1 loop
-                readline(infile1, inline);
-                for i in 0 to Nsub-1 loop
-                    read(inline, dataread1);
-                    real_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                    read(inline, dataread1);
-                    imag_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                end loop;
-                wait for clk_period*1;
-            end loop;
-            dv_in <= '0';
-            branch_in <= "XX";
-            wait for clk_period*2515;
-            --
-            dv_in <= '1';
-            branch_in <= "10";
-            for j in 0 to Nfft/2-1 loop
-                readline(infile2, inline);
-                for i in 0 to Nsub-1 loop
-                    read(inline, dataread1);
-                    real_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                    read(inline, dataread1);
-                    imag_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                end loop;
-                wait for clk_period*1;
-            end loop;
-            dv_in <= '0';
-            branch_in <= "XX";
-            wait for clk_period*2515;
-            --
-            dv_in <= '1';
-            branch_in <= "11";
-            for j in 0 to Nfft/2-1 loop
-                readline(infile3, inline);
-                for i in 0 to Nsub-1 loop
-                    read(inline, dataread1);
-                    real_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                    read(inline, dataread1);
-                    imag_in(i) <= std_logic_vector(to_signed(integer(round(inscale*dataread1)), corr_dwidth));
-                end loop;
-                wait for clk_period*1;
-            end loop;
-            dv_in <= '0';
-            branch_in <= "XX";
-            wait for clk_period*2515;
-            --
-            dv_in <= '0';
-            branch_in <= "XX";
-            wait for clk_period*5812;
+            s_axis_data_tvalid  <= '1';
+            readline(infile0, inline);
+            read(inline, dataread1);
+            real_in <= std_logic_vector(to_signed(dataread1, 12));
+            read(inline, dataread1);
+            imag_in <= std_logic_vector(to_signed(dataread1, 12));
+            wait for clk_period*1;
+
+            s_axis_data_tvalid  <= '0';
+            wait for clk_period*15;
             --
         end loop;
         file_close(f=>infile0);
-        file_close(f=>infile1);
-        file_close(f=>infile2);
-        file_close(f=>infile3);
-        endoffile <= '1';
-        wait for clk_period*Nfft*10; -- empty the pipe.
+        wait for clk_period*10;
 
         assert false report "simulation ended" severity failure;
         wait;    
@@ -144,39 +73,35 @@ begin
     end process;
 
     result_proc:process
-        file res3_file : text open write_mode is "../../../corr_out3.dat";
-        file res2_file : text open write_mode is "../../../corr_out2.dat";
-        file res1_file : text open write_mode is "../../../corr_out1.dat";
-        file res0_file : text open write_mode is "../../../corr_out0.dat";
+        file res0_file : text open write_mode is "../../../filt_out.dat";
         variable result_line : line;
     begin
         wait until rising_edge(clk);
-        if (endoffile='0') and (dv_out='1') then
-            for i in 0 to Nsub-1 loop
-                write(L=>result_line, value=>to_integer(signed(real_out(0)(i))));
-                write(L=>result_line, value=>string'("  "));
-                write(L=>result_line, value=>to_integer(signed(imag_out(0)(i))));
-                write(L=>result_line, value=>string'("  "));
-            end loop;
-            case branch_out is
-                when "11" => writeline(res3_file, result_line);
-                when "10" => writeline(res2_file, result_line);
-                when "01" => writeline(res1_file, result_line);
-                when "00" => writeline(res0_file, result_line);
-                when others =>
-            end case;
+        if (m_axis_data_tvalid='1') then
+            write(L=>result_line, value=>to_integer(signed(real_out)));
+            write(L=>result_line, value=>string'("  "));
+            write(L=>result_line, value=>to_integer(signed(imag_out)));
+            write(L=>result_line, value=>string'("  "));
+            writeline(res0_file, result_line);
         end if;
     end process;
 
+    -- Pack the axis data.
+    s_axis_data_tdata(11 downto  0) <= real_in;
+    s_axis_data_tdata(27 downto 16) <= imag_in;
+    -- the core
     uut : entity work.halfband0
     PORT MAP (
         aresetn => aresetn,
-        aclk => aclk,
+        aclk => clk,
         s_axis_data_tvalid => s_axis_data_tvalid,
         s_axis_data_tready => s_axis_data_tready,
         s_axis_data_tdata => s_axis_data_tdata,
         m_axis_data_tvalid => m_axis_data_tvalid,
         m_axis_data_tdata => m_axis_data_tdata);
+    -- rip the axis data
+    real_out <= m_axis_data_tdata(12 downto  0);
+    imag_out <= m_axis_data_tdata(28 downto 16);
 
     clk_proc:process
     begin

@@ -7,8 +7,7 @@ create_fileset -simset simset
 read_ip [ glob ../ip/halfband0/halfband0.xci ]
 generate_target {all} [get_ips *]
 
-#add_files -fileset simset [glob ../source/chirp_gen.vhd]
-#add_files -fileset simset [glob ../source/testbench/chirp_gen_tb.vhd]
+add_files -fileset simset [glob ../hdl/halfband0_matlab_tb.vhd]
 
 current_fileset -simset [ get_filesets simset ]
 

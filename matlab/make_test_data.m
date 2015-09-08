@@ -1,6 +1,6 @@
 clear;
 Nb = 12; % number of bits in input word
-N=2^14;  % number of samples
+N=2^12;  % number of samples
 
 cr=2*pi/N; 
 w=(-N/2:N/2-1)*cr; 
