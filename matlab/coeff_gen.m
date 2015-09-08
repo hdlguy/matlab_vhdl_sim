@@ -12,20 +12,16 @@ scale_factor = ((2^(Nb-1))-1)/max(abs(b));
 b2 = b*scale_factor;
 
 % Now let's scale the coeffs so they give good output range.
-G=abs(sum(b2)); 
-headroom = 0.9; 
-Gscale = headroom*(2^floor(log2(G/headroom)))/G;
-b3 = round(b2*Gscale);
-sprintf('length of b3 = %d, gain of b3 = %d\n', length(b3), sum(b3))
+sprintf('length of b2 = %d, gain of b2 = %d\n', length(b2), sum(b2))
 figure(1);
-freqz(b3/scale_factor);
+freqz(b2/scale_factor);
 
 % print out the quantized coefficients in Xilinx .coe format.
 fid = fopen('halfband0.coe','w');
 fprintf(fid,'Radix = 10;\n');
 fprintf(fid,'CoefData =');
-for i=1:length(b3)
-    fprintf(fid,' %d', b3(i));
+for i=1:length(b2)
+    fprintf(fid,' %d', b2(i));
 end
 fprintf(fid,';\n');
 fclose(fid);
